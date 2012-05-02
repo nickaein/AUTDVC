@@ -16,30 +16,28 @@ DWORD WINAPI ThreadSWDecodeBand(void* par);
 //   AllBitplanes: will be filled by bitplanes for each band (Band,Bitplane,Coefficient)
 //     nBitplanes: Number for allocated bitplanes for each band (calculated based on coefficient values of each band)
 // AccumSyndromes: generated LDPCA syndromes for bitplanes of each band
-
-
-	vector<vector<int>> Quantizer(const vector<vector<double>>& DCTBands,const vector<vector<Point2d>>& Ranges) 
+vector<vector<int>> Quantizer(const vector<vector<double>>& DCTBands,const vector<vector<Point2d>>& Ranges) 
+{
+	vector<vector<int>> DCTIndicis;
+	DCTIndicis.resize( DCTBands.size() );
+	for(int iBand=0 ; iBand<DCTBands.size() ; iBand++)
 	{
-		vector<vector<int>> DCTIndicis;
-		DCTIndicis.resize( DCTBands.size() );
-		for(int iBand=0 ; iBand<DCTBands.size() ; iBand++)
+		DCTIndicis[iBand].resize( DCTBands[iBand].size() );
+		for(int iCoeff=0 ; iCoeff<DCTBands[iBand].size() ; iCoeff++)
 		{
-			DCTIndicis[iBand].resize( DCTBands[iBand].size() );
-			for(int iCoeff=0 ; iCoeff<DCTBands[iBand].size() ; iCoeff++)
+			double v = DCTBands[iBand][iCoeff];
+			int index = 0;
+			for(; index<Ranges[iBand].size() ; index++)
 			{
-				double v = DCTBands[iBand][iCoeff];
-				int index;
-				for(index=0 ; index<Ranges[iBand].size() ; index++)
-				{
-					if( v >= Ranges[iBand][index].x && v < Ranges[iBand][index].y )
-						break;
-				}
-				DCTIndicis[iBand][iCoeff] = index;
+				if( v >= Ranges[iBand][index].x && v < Ranges[iBand][index].y )
+					break;
 			}
+			DCTIndicis[iBand][iCoeff] = index;
 		}
-
-		return DCTIndicis;
 	}
+
+	return DCTIndicis;
+}
 
 void EncodeSWQuad(Mat Quad,int iQuant,vector<vector<Point2d>>& QuantRanges,vector<vector<double*>>& AllBitplanes,vector<vector<double*>>& AccumSyndromes)
 {
@@ -47,24 +45,24 @@ void EncodeSWQuad(Mat Quad,int iQuant,vector<vector<Point2d>>& QuantRanges,vecto
 	vector<Mat> Blocks = AUTDVC::MapData::Quad2Blocks(Quad,AUTDVC::Consts::DCTSize);
 
 	// Calculate DCT of the blocks
-	vector<Mat> DCTQuantizedBlocks;
-	DCTQuantizedBlocks.resize(Blocks.size());
+	vector<Mat> DCTBlocks;
+	DCTBlocks.resize(Blocks.size());
 	for(int iblock=0 ; iblock!=Blocks.size() ; ++iblock)
 	{
 		Mat m = Blocks[iblock].clone();
 		m.convertTo(m,CV_64F);
 		dct(m,m);
-		DCTQuantizedBlocks[iblock] = m;
+		DCTBlocks[iblock] = m;
 	}
 
 	// Group the coefficients to create DCT bands
 	int nBands = AUTDVC::Consts::DCTSize * AUTDVC::Consts::DCTSize;
-	vector<vector<double>> DCTBands = AUTDVC::MapData::Blocks2Coeffs<double>(DCTQuantizedBlocks,AUTDVC::Consts::DCTSize);
+	vector<vector<double>> DCTBands = AUTDVC::MapData::Blocks2Coeffs<double>(DCTBlocks,AUTDVC::Consts::DCTSize);
 
 	// Calculate the quantization step size for each band
 	vector<double> QStepSize;
 	QStepSize.resize( nBands );
-	//maxv is supposed to be 1024 for the DC band
+	//maxv is assumed 1024 for the DC band
 	QStepSize[0] = 1024.0 / AUTDVC::Consts::QLevels[iQuant][0]; 
 
 	for(int iBand=1 ; iBand<nBands ; iBand++)
@@ -87,20 +85,20 @@ void EncodeSWQuad(Mat Quad,int iQuant,vector<vector<Point2d>>& QuantRanges,vecto
 	for(int i=0 ; i<Consts::QLevels[iQuant][0] ; i++)
 		QuantRanges[0].push_back( Point2d( i*QStepSize[0], (i+1)*QStepSize[0]) );
 
-	// Uniform quantizer symmetric around zero
+	// Uniform quantizer symmetric around zero for AC bands
 	for(int iBand=1 ; iBand<nBands ; iBand++)
 	{		
-		//negative bins
+		// negative bins
 		for(int i=-(int)floor(Consts::QLevels[iQuant][iBand]/2.0) ; i<-1 ; i++)
 		{
 			QuantRanges[iBand].push_back( Point2d(i*QStepSize[iBand], (i+1)*QStepSize[iBand]) );
 		}
 
-		// "zero" bin has doubled size
+		// "zero" bin which has a doubled width
 		QuantRanges[iBand].push_back( Point2d(-QStepSize[iBand], QStepSize[iBand]) );
 
-		//positive bins
-		for(int i=1 ; i<floor(Consts::QLevels[iQuant][iBand]/2.0) ; i++)
+		// positive bins
+		for(int i=1 ; i<=(int)floor(Consts::QLevels[iQuant][iBand]/2.0) ; i++)
 		{
 			QuantRanges[iBand].push_back( Point2d(i*QStepSize[iBand], (i+1)*QStepSize[iBand]) );
 		}
@@ -110,12 +108,13 @@ void EncodeSWQuad(Mat Quad,int iQuant,vector<vector<Point2d>>& QuantRanges,vecto
 	vector<vector<int>> DCTIndicis = Quantizer(DCTBands,QuantRanges);
 
 	// Extract bitplanes for DCT indicis
-	size_t bitplaneLength = DCTQuantizedBlocks.size();
+	size_t bitplaneLength = DCTBlocks.size();
 	AllBitplanes.clear();
 	AllBitplanes.resize( nBands );
 	for(int iBand=0 ; iBand<nBands ; iBand++)
 	{
-		// check if the band should be ignored or not
+		// check if the band should be encoded 
+		// and transmitted or not (be ignored)
 		if(AUTDVC::Consts::QLevels[iQuant][iBand]>0)
 		{
 			int nbits = (int)ceil(log((double)AUTDVC::Consts::QLevels[iQuant][iBand]) / log(2.0));
@@ -123,7 +122,7 @@ void EncodeSWQuad(Mat Quad,int iQuant,vector<vector<Point2d>>& QuantRanges,vecto
 		}
 	}
 
-	//LDPCA Encode each bitplane of each band
+	// LDPCA Encode each bitplane of each band
 	AccumSyndromes.resize( nBands );
 	for(int iBand=0 ; iBand<nBands ; iBand++)
 	{
@@ -205,17 +204,11 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 
 	int nTransmittedbits = 0;
 
-	// Decode each bitplane independently
 	size_t NCoeffs = SideInfoQuantizedBands->size();
 	DecodedCoeffs->resize( NCoeffs );
 	
-	int maxLevel;
-	if(iBand==0)
-		maxLevel = QuantRanges->size() - 1;
-	else
-		maxLevel = QuantRanges->size();
+	int maxLevel = QuantRanges->size() - 1;
 
-		
 	// decode starting from MSB to LSB
 	for(int iBitplane=nBitplanes-1 ; iBitplane>=0 ; iBitplane--)
 	{
@@ -224,17 +217,12 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 		double* p1 = new double[NCoeffs];
 		double* p0 = new double[NCoeffs];
 
-		if(iBand==5 && iBitplane==0)
-		{
-			iBand = iBand;
-		}
 		for(unsigned int iCoeff=0 ; iCoeff<NCoeffs ; iCoeff++)
 		{
 			p0[iCoeff] = p1[iCoeff] = FLT_MIN;
-			double sidelevel = (*SideInfoDCT)[iCoeff];
+			double sidevalue = (*SideInfoDCT)[iCoeff];
 
 			int decodedcoeff = (*DecodedCoeffs)[iCoeff];
-			//decodedcoeff = sidelevel; //ZZZZZZZZ
 				
 			double alpha = (*Alphas)[iCoeff];		
 
@@ -246,15 +234,11 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 				if( ((level ^ decodedcoeff) & decodedbitMask) == 0)
 				{
 					if( level & currentbitMask )
-						p1[iCoeff] += (alpha/2) * exp( -alpha*abs(levelvalue - sidelevel)/(double)1) ;
+						p1[iCoeff] += (alpha/2) * exp( -alpha*abs(levelvalue - sidevalue)/(double)1 ) ;
 					else
-						p0[iCoeff] += (alpha/2) * exp( -alpha*abs(levelvalue - sidelevel)/(double)1) ;
+						p0[iCoeff] += (alpha/2) * exp( -alpha*abs(levelvalue - sidevalue)/(double)1 ) ;
 				}
 			}
-		}
-		if(iBand==5 && iBitplane==0)
-		{
-			iBand = iBand;
 		}
 
 		double* pLLR = new double[NCoeffs];
@@ -273,8 +257,9 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 
 		delete[] pLLR;
 
-		// TODO: replace "DecodedCoeffs" variable with "SideInfoQuantizedBands"
-		// or something else to update side information at each bitplane decoding.
+		// TODO: maybe you need to replace "DecodedCoeffs" variable with 
+		// "SideInfoQuantizedBands" or something else to update side 
+		// information at each bitplane decoding.
 		for(unsigned int iCoeff=0 ; iCoeff<NCoeffs ; iCoeff++)
 		{
 			if(decodedbits[iCoeff])
@@ -286,8 +271,8 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 		delete[] decodedbits;
 	}
 	for(unsigned int iCoeff=0 ; iCoeff<NCoeffs ; iCoeff++)
-		if( (*DecodedCoeffs)[iCoeff] > maxLevel )
-			(*DecodedCoeffs)[iCoeff] = maxLevel;
+		if( (*DecodedCoeffs)[iCoeff] >= maxLevel )
+			(*DecodedCoeffs)[iCoeff] = maxLevel - 1;
 
 	info->nTransmittedBits = nTransmittedbits;
 	return 0;

@@ -178,8 +178,16 @@ void LDPCAdecodeBits(const char* InitByLadderFile, double *LLR_intrinsic, double
             numErrors[0] = 0;
             for(k=0; k<n; k++)
                 numErrors[0] += (double) (decoded[k]!=source[k]);
-			delete[] syndrome;
-            return;
+			// TODO: Remove this line and check 
+			// correctness of decoded bits using a 
+			// hash-based method. This below solution to
+			// check the correctness is impractical since the 
+			// source bits are not presen at the decoder
+			if(numErrors[0] == 0)
+			{
+				delete[] syndrome;
+				return;
+			}
         }   
     }
 	delete[] syndrome;

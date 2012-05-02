@@ -11,7 +11,7 @@ namespace AUTDVC {
 		and Key Frame Coding Mode Selection", IEEE Trans. on Image Processing, 2011 */
 
 namespace Consts {
-	const int ThreadCount = 2;
+	const int ThreadCount = 4;
 	const int LDPCALength = 396;
 	const int FramesPerSecond = 15;
 

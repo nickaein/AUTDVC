@@ -46,7 +46,8 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 		//AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
 
 		//////zzzzzzzzzzzzzzzzzz
-		SideInformation = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame][iquad], AUTDVC::Consts::JPEGQualityIndex[iQuant]);
+		//SideInformation = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame][iquad], AUTDVC::Consts::JPEGQualityIndex[iQuant]);
+		SideInformation = AllQs[iFrame][iquad];
 		vector<Mat> SideBlocks;
 		vector<vector<double>> SideBands;
 		vector<vector<int>> SideBandsQuant;
@@ -186,7 +187,7 @@ int main(int argc, char ** argv)
 		cs.codingMode = codeWZ;
 		printf("Enter Q parameter: ");
 		cs.iQuant = 0;
-		scanf("%d", &cs.iQuant); ////
+		//scanf("%d", &cs.iQuant); ////
 		cs.resourcespath = "E:\\Thesis\\Resources\\";
 		cs.outputpath = "E:\\Thesis\\Output\\";
 		cs.videoname = "foreman_qcif.yuv";
