@@ -46,9 +46,7 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 		//AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
 
 		//////zzzzzzzzzzzzzzzzzz
-		SideInformation = AllQs[iFrame][iquad];
-		int z;
-		int zz;
+		SideInformation = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame][iquad], AUTDVC::Consts::JPEGQualityIndex[iQuant]);
 		vector<Mat> SideBlocks;
 		vector<vector<double>> SideBands;
 		vector<vector<int>> SideBandsQuant;
@@ -73,14 +71,14 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 		int nTransmittedBits;
 		AUTDVC::DecodeSWQuad(SideInformation,Alphas,AllBitplanes,iQuant,QuantRanges,AccumSynd,DecodedCoeffs,SideBands,SideBandsQuant,nTransmittedBits);
 		
-		double nb = 0.0;
+		double nbits = 0.0;
 		for(int i=0;i<16;i++)
 		{
 			if(AUTDVC::Consts::QLevels[iQuant][i]!=0)
-				nb += log((double)AUTDVC::Consts::QLevels[iQuant][i]) / log(2.0);
+				nbits += log((double)AUTDVC::Consts::QLevels[iQuant][i]) / log(2.0);
 		}
 
-		double LDPCAbitrate = nTransmittedBits / nb / (double)AUTDVC::Consts::LDPCALength;
+		double LDPCAbitrate = nTransmittedBits / nbits / (double)AUTDVC::Consts::LDPCALength;
 
 		// reconstruct the quad using decoded bitplanes,
 		// side information and 
@@ -91,6 +89,8 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 			
 		double PSNR = AUTDVC::Misc::calcPSNR(AllQs[iFrame][iquad],ReconstructedQuad);
 
+		// free up the memory allocated by WZ encoder
+		// for the original bitplanes and syndromes
 		for(int i=0;i<AllBitplanes.size();i++)
 			for(int j=0;j<AllBitplanes[i].size();j++)
 				delete[] AllBitplanes[i][j];
@@ -185,8 +185,8 @@ int main(int argc, char ** argv)
 	{
 		cs.codingMode = codeWZ;
 		printf("Enter Q parameter: ");
-		scanf("%d", &cs.iQuant);
-		//cs.iQuant = 0;
+		cs.iQuant = 0;
+		scanf("%d", &cs.iQuant); ////
 		cs.resourcespath = "E:\\Thesis\\Resources\\";
 		cs.outputpath = "E:\\Thesis\\Output\\";
 		cs.videoname = "foreman_qcif.yuv";
