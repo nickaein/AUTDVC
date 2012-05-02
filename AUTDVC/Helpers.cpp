@@ -233,7 +233,7 @@ namespace MapData {
 	{
 		Bitplanes.clear();
 		Bitplanes.resize( nBitplanes );
-		for(int iBitplane=0;iBitplane<nBitplanes;iBitplane++)
+		for(int iBitplane=0 ; iBitplane<nBitplanes ; iBitplane++)
 		{
 			Bitplanes[iBitplane] = new double[BandCoeffs.size()];
 

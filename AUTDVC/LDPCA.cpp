@@ -6,7 +6,7 @@
 #include <string.h>
 
 //returns entire accumulated syndrome of source wrt code of source rate 1
-void LDPCAencodeBits(char *InitByLadderFile, double *source, double *accumulatedSyndrome)
+void LDPCAencodeBits(const char *InitByLadderFile, double *source, double *accumulatedSyndrome)
 {
     FILE* fp = NULL;
 	static int n = 0, m = 0;
@@ -89,7 +89,7 @@ int beliefPropagation(int *ir, int *jc, int m, int n, int nzmax,
 //decodeBits() finds the minimum rate for which the decoded bitstream matches
 //the transmitted portion of the accumulated syndrome.
 //The number of residual bit errors is also calculated.
-void LDPCAdecodeBits(char* InitByLadderFile, double *LLR_intrinsic, double *accumulatedSyndrome, double *source,
+void LDPCAdecodeBits(const char* InitByLadderFile, double *LLR_intrinsic, double *accumulatedSyndrome, double *source,
                 double *decoded, double *rate, double *numErrors)
 {
 	static int numCodes = 0, n = 0, nzmax = 0, totalNumInc = 0;

@@ -1,9 +1,29 @@
 #include "opencv2/core/core.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
 #include "Helpers.h"
 using namespace cv;
 
 namespace AUTDVC {
 namespace WZDecoder {
+	void SI_SimpleAverage(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
+	{
+		static StereoBM SBM;
+		static bool FirstRun = true;
+		if(FirstRun)
+		{
+			FirstRun = false;
+			SBM.init(0);
+		}
+		Mat disp;
+		SBM(PrevKeyQuad,NextKeyQuad,SI);
+				
+		// Estimate the SI through a simple average
+		//SI = (PrevKeyQuad + NextKeyQuad)/2.0;
+		
+		SI.convertTo(SI,CV_8U);
+	}
+
+
 	void CorrelationNoiseModeling(Mat PrevKeyQuad,Mat NextKeyQuad,vector<vector<double>>& Alphas)
 	{
 		//Correlation Noise Modeling
@@ -69,15 +89,6 @@ namespace WZDecoder {
 					Alphas[iBand][iCoeff] = sqrt( 2.0/DistCoeffs[iBand][iCoeff] );
 			}
 		}
-	}
-
-
-	void SI_SimpleAverage(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
-	{
-		// Estimate the SI through a simple average
-		SI = (PrevKeyQuad + NextKeyQuad)/2.0;
-		SI.convertTo(SI,CV_8U);
-
 	}
 
 

@@ -10,8 +10,10 @@ using namespace cv;
 using namespace std;
 
 #ifdef _DEBUG
+#pragma comment(lib,"opencv_calib3d231d")
 #pragma comment(lib,"opencv_imgproc231d")
 #else
+#pragma comment(lib,"opencv_calib3d231")
 #pragma comment(lib,"opencv_imgproc231")
 #endif
 
@@ -22,7 +24,6 @@ struct CodecSettings {
 	string videoname;
 	string videofile;
 	string RDlogfile;
-	string ladderfile;
 	int iQuant;
 	CodingMode codingMode;
 };
@@ -40,10 +41,14 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 
 		//Generate SideInformation
 		Mat SideInformation;
-		Mat PrevKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame-1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
-		Mat NextKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame+1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
-		AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
+		//Mat PrevKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame-1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
+		//Mat NextKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame+1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
+		//AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
 
+		//////zzzzzzzzzzzzzzzzzz
+		SideInformation = AllQs[iFrame][iquad];
+		int z;
+		int zz;
 		vector<Mat> SideBlocks;
 		vector<vector<double>> SideBands;
 		vector<vector<int>> SideBandsQuant;
@@ -125,11 +130,6 @@ void Initialize(CodecSettings& cs)
 	srand( (unsigned int)getTickCount() );
 	char buf[1000];
 
-	// initialize LDPCA encoder and decoder by loading 
-	// the ladder file (to eliminate race-condition in multi-thread calls)	
-	LDPCAencodeBits("396_regDeg3.lad",0,0);
-	LDPCAdecodeBits("396_regDeg3.lad",0,0,0,0,0,0);
-
 	//generate fullpath for the video file
 	cs.videofile = cs.resourcespath + cs.videoname;
 
@@ -153,6 +153,7 @@ void Initialize(CodecSettings& cs)
 	logfile += ".log";
 	cs.RDlogfile = logfile;
 
+	// initialize log file
 	FILE* flog;
 	if (fopen_s(&flog,cs.RDlogfile.c_str(),"wt")!=0)
 	{
@@ -160,6 +161,13 @@ void Initialize(CodecSettings& cs)
 		exit(-1);
 	}
 	fclose(flog);
+
+	// initialize LDPCA encoder and decoder by loading 
+	// the ladder file (to eliminate race-condition in multi-thread calls)
+	string ladderfile = cs.resourcespath;
+	ladderfile = ladderfile + "396_regDeg3.lad";
+	LDPCAencodeBits(ladderfile.c_str(),0,0);
+	LDPCAdecodeBits(ladderfile.c_str(),0,0,0,0,0,0);
 }
 
 void AppendToFile(string filename,string text)
@@ -178,12 +186,13 @@ int main(int argc, char ** argv)
 		cs.codingMode = codeWZ;
 		printf("Enter Q parameter: ");
 		scanf("%d", &cs.iQuant);
+		//cs.iQuant = 0;
 		cs.resourcespath = "E:\\Thesis\\Resources\\";
 		cs.outputpath = "E:\\Thesis\\Output\\";
 		cs.videoname = "foreman_qcif.yuv";
 	}
 	
-	printf("\r\nInitializing the Codec...");
+	printf("\nInitializing the Codec...\n");
 	Initialize(cs);
 
 	vector<Mat> VidY,VidU,VidV;
@@ -209,6 +218,7 @@ int main(int argc, char ** argv)
 		double frameBitrate = 0.0;
 		double frameLDPCArate = 0.0;
 
+		
 		if(cs.codingMode==codeWZ)
 		{
 			if(iFrame % 2 == 1) //WZ frame
@@ -225,7 +235,7 @@ int main(int argc, char ** argv)
 		}
 		frameBitrate = (frameBitrate / 1000.0) * AUTDVC::Consts::FramesPerSecond;
 
-		sprintf(buf,"%05d  %05.2f %05.2f %05.2f  %07.3f\n",iFrame,framePSNRY,framePSNRU,framePSNRV,frameBitrate);
+		sprintf(buf,"%05d  %05.2f %05.2f %05.2f  %07.3f %7.5f\n",iFrame,framePSNRY,framePSNRU,framePSNRV,frameBitrate,frameLDPCArate);
 		printf(buf);
 		AppendToFile(cs.RDlogfile,buf);
 	}

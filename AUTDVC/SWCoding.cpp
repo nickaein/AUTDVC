@@ -18,137 +18,6 @@ DWORD WINAPI ThreadSWDecodeBand(void* par);
 // AccumSyndromes: generated LDPCA syndromes for bitplanes of each band
 
 
-//void OLDEncodeSWQuad(Mat Quad,int iQuant,vector<vector<double*>>& AllBitplanes,vector<int>& nBitplanes,vector<vector<double*>>& AccumSyndromes)
-//{
-//	// Divide quad into NxN blocks (N is DCT tranformation size)
-//	vector<Mat> Blocks = AUTDVC::MapData::Quad2Blocks(Quad,AUTDVC::Consts::DCTSize);
-//
-//	// Calculate DCT for blocks and quantize the DCT coeffs.
-//	vector<Mat> DCTQuantizedBlocks;
-//	DCTQuantizedBlocks.resize(Blocks.size());
-//	for(int iblock=0 ; iblock!=Blocks.size() ; ++iblock)
-//	{
-//		DCTQuantizedBlocks[iblock] = AUTDVC::ImageProc::calcDCTandQuantize(Blocks[iblock],iQuant);
-//	}
-//
-//	// Group the coefficients to create DCT bands
-//	int nBands = AUTDVC::Consts::DCTSize * AUTDVC::Consts::DCTSize;
-//	vector<vector<int>> DCTBands = AUTDVC::MapData::Blocks2Coeffs<int>(DCTQuantizedBlocks,AUTDVC::Consts::DCTSize);
-//
-//	// Calculate number of bits for each band
-//	nBitplanes.resize( nBands );
-//	for(int iBand=0 ; iBand<nBands ; iBand++)
-//	{
-//		// Find maximum amplitude for current band
-//		short maxv = 0;
-//		for(vector<int>::const_iterator v=DCTBands[iBand].begin() ; v!=DCTBands[iBand].end() ; ++v)
-//		{
-//			if( abs(*v) > maxv )
-//				maxv = abs(*v);
-//		}
-//		
-//		// nbits = log2( max_v )
-//		if(maxv>0)
-//		{
-//			// AC coefficients needs an extra bit as they are 
-//			// between -128 to 127 and will be shifted between 0 to 255
-//			if(iBand==0)
-//				nBitplanes[iBand] = (int)floor(logf(maxv)/logf(2.0) + 1);
-//			else
-//				nBitplanes[iBand] = (int)floor(logf(maxv)/logf(2.0) + 1) + 1;
-//		}
-//		else
-//			nBitplanes[iBand] = 0;
-//	}
-//
-//	//// Convert AC coefficient values to coefficient indices
-//	//for(int iBand=1;iBand<nBands;iBand++)
-//	//	for(int i=0;i<DCTBands[iBand].size();i++)
-//	//		DCTBands[iBand][i] = AUTDVC::Misc::MapACCoefficient(DCTBands[iBand][i]);
-//
-//	// Extract bitplanes for each band
-//	size_t bitplaneLength = DCTQuantizedBlocks.size();
-//	AllBitplanes.clear();
-//	AllBitplanes.resize( nBands );
-//	for(int iBand=0;iBand<nBands;iBand++)
-//	{
-//		AUTDVC::MapData::ExtractBitplanes(DCTBands[iBand],nBitplanes[iBand],AllBitplanes[iBand]);
-//	}
-//
-//	//LDPCA Encode each bitplane of each band
-//	AccumSyndromes.resize( nBands );
-//	for(int iBand=0;iBand<nBands;iBand++)
-//	{
-//		AccumSyndromes[iBand].resize( nBitplanes[iBand] );
-//		for(int iBitplane=0;iBitplane<nBitplanes[iBand];iBitplane++)
-//		{
-//			AccumSyndromes[iBand][iBitplane] = new double[bitplaneLength];
-//			LDPCAencodeBits(0,AllBitplanes[iBand][iBitplane],AccumSyndromes[iBand][iBitplane]);
-//		}
-//	}
-//	
-//	return;
-//}
-
-//void OLDDecodeSWQuad(Mat SideInfo,vector<vector<double>>& Alphas,vector<vector<double*>>& OriginalBitplanes,int iQuant,
-//	vector<vector<double*>>& AccumSyndromes,vector<int> nBitplanes,vector<vector<short>>& DecodedCoeffs,int& nTransmittedbits)
-//{
-//	// Divide quad into NxN blocks (N is DCT tranformation size)
-//	vector<Mat> Blocks = AUTDVC::MapData::Quad2Blocks(SideInfo,AUTDVC::Consts::DCTSize);
-//
-//	// Calculate DCT for blocks and quantize the DCT coeffs.
-//	vector<Mat> DCTSideInfoBlocks,DCTSideInfoQuantized;
-//	DCTSideInfoBlocks.resize(Blocks.size());
-//	DCTSideInfoQuantized.resize(Blocks.size());
-//	for(int iblock=0 ; iblock!=Blocks.size() ; ++iblock)
-//	{
-//		DCTSideInfoQuantized[iblock] = AUTDVC::ImageProc::calcDCTandQuantize(Blocks[iblock],iQuant);
-//		DCTSideInfoBlocks[iblock] = AUTDVC::ImageProc::calcDCTandQuantize(Blocks[iblock],-1);
-//	}
-//
-//	// Group the coefficients to create DCT bands
-//	int nBands = AUTDVC::Consts::DCTSize * AUTDVC::Consts::DCTSize;
-//	vector<vector<short>> SideInfoQuantizedBands = 
-//		AUTDVC::MapData::Blocks2Coeffs<short>(DCTSideInfoQuantized,AUTDVC::Consts::DCTSize);
-//
-//	// LDPCA DECODING
-//	nTransmittedbits = 0;
-//
-//	// Decode each band independently in a thread
-//	DecodedCoeffs.clear();
-//	DecodedCoeffs.resize( SideInfoQuantizedBands.size() );
-//	
-//	for(int iBand=0 ; iBand<SideInfoQuantizedBands.size() ;)
-//	{
-//		HANDLE* hThreads = new HANDLE[AUTDVC::Consts::ThreadCount];
-//		Misc::SSWDECODEBANDINFO* info = new Misc::SSWDECODEBANDINFO[AUTDVC::Consts::ThreadCount];
-//
-//		int nCreatedThreads = 0;
-//		for(int i=0 ; i<AUTDVC::Consts::ThreadCount && iBand<SideInfoQuantizedBands.size() ; i++)
-//		{
-//			info[i].AccumSyndromes = &AccumSyndromes[iBand];
-//			info[i].DecodedCoeffs = &DecodedCoeffs[iBand];
-//			info[i].iBand = iBand;
-//			info[i].nBitplanes = nBitplanes[iBand];
-//			info[i].OriginalBitplanes = &OriginalBitplanes[iBand];
-//			info[i].SideInfoQuantizedBands = &SideInfoQuantizedBands[iBand];
-//
-//			hThreads[i] = CreateThread(0,0,ThreadSWDecodeBand,&info[i],0,0);
-//			iBand++;
-//			nCreatedThreads++;
-//		}
-//
-//		WaitForMultipleObjects(nCreatedThreads,hThreads,TRUE,INFINITE);
-//		
-//		for(int i=0 ; i<nCreatedThreads ; i++)
-//		{
-//			nTransmittedbits += info[i].nTransmittedBits;
-//		}
-//		delete[] hThreads;
-//		delete[] info;
-//	}
-//}
-
 	vector<vector<int>> Quantizer(const vector<vector<double>>& DCTBands,const vector<vector<Point2d>>& Ranges) 
 	{
 		vector<vector<int>> DCTIndicis;
@@ -244,7 +113,7 @@ void EncodeSWQuad(Mat Quad,int iQuant,vector<vector<Point2d>>& QuantRanges,vecto
 	size_t bitplaneLength = DCTQuantizedBlocks.size();
 	AllBitplanes.clear();
 	AllBitplanes.resize( nBands );
-	for(int iBand=0;iBand<nBands;iBand++)
+	for(int iBand=0 ; iBand<nBands ; iBand++)
 	{
 		// check if the band should be ignored or not
 		if(AUTDVC::Consts::QLevels[iQuant][iBand]>0)
@@ -330,7 +199,7 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 	vector<double>* Alphas = info->Alphas;
 	vector<Point2d>* QuantRanges = info->QuantRanges;
 	vector<double> QuantCenters;
-	
+
 	for(int i=0 ; i<QuantRanges->size() ; i++)
 		QuantCenters.push_back( (((*QuantRanges)[i]).x + ((*QuantRanges)[i]).y)/2.0 );
 
@@ -339,7 +208,13 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 	// Decode each bitplane independently
 	size_t NCoeffs = SideInfoQuantizedBands->size();
 	DecodedCoeffs->resize( NCoeffs );
-	int maxLevel = QuantRanges->size() - 1;
+	
+	int maxLevel;
+	if(iBand==0)
+		maxLevel = QuantRanges->size() - 1;
+	else
+		maxLevel = QuantRanges->size();
+
 		
 	// decode starting from MSB to LSB
 	for(int iBitplane=nBitplanes-1 ; iBitplane>=0 ; iBitplane--)
@@ -349,21 +224,21 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 		double* p1 = new double[NCoeffs];
 		double* p0 = new double[NCoeffs];
 
+		if(iBand==5 && iBitplane==0)
+		{
+			iBand = iBand;
+		}
 		for(unsigned int iCoeff=0 ; iCoeff<NCoeffs ; iCoeff++)
 		{
-			if(iBand==5 && iCoeff==39)
-			{
-				iBand = 5;
-			}
 			p0[iCoeff] = p1[iCoeff] = FLT_MIN;
 			double sidelevel = (*SideInfoDCT)[iCoeff];
+
 			int decodedcoeff = (*DecodedCoeffs)[iCoeff];
 			//decodedcoeff = sidelevel; //ZZZZZZZZ
 				
-			double alpha = (*Alphas)[iCoeff];
-			//double alpha = 0.01;
+			double alpha = (*Alphas)[iCoeff];		
 
-			for(int level=0;level<QuantRanges->size();level++)
+			for(int level=0 ; level<QuantRanges->size() ; level++)
 			{
 				double levelvalue = QuantCenters[level];
 				// check if this level is compatible with the
@@ -371,11 +246,15 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 				if( ((level ^ decodedcoeff) & decodedbitMask) == 0)
 				{
 					if( level & currentbitMask )
-						p1[iCoeff] += (alpha/2) * exp( -alpha*(double)abs((levelvalue - sidelevel)/(double)1) );
+						p1[iCoeff] += (alpha/2) * exp( -alpha*abs(levelvalue - sidelevel)/(double)1) ;
 					else
-						p0[iCoeff] += (alpha/2) * exp( -alpha*(double)abs((levelvalue - sidelevel)/(double)1) );
+						p0[iCoeff] += (alpha/2) * exp( -alpha*abs(levelvalue - sidelevel)/(double)1) ;
 				}
 			}
+		}
+		if(iBand==5 && iBitplane==0)
+		{
+			iBand = iBand;
 		}
 
 		double* pLLR = new double[NCoeffs];
@@ -400,6 +279,8 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 		{
 			if(decodedbits[iCoeff])
 				(*DecodedCoeffs)[iCoeff] |= currentbitMask;
+			else
+				(*DecodedCoeffs)[iCoeff] &= (~currentbitMask);
 		}
 			
 		delete[] decodedbits;
