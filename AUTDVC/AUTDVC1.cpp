@@ -41,13 +41,13 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 
 		//Generate SideInformation
 		Mat SideInformation;
-		//Mat PrevKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame-1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
-		//Mat NextKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame+1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
-		//AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
+		Mat PrevKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame-1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
+		Mat NextKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame+1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
+		AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
 
 		//////zzzzzzzzzzzzzzzzzz
-		//SideInformation = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame][iquad], AUTDVC::Consts::JPEGQualityIndex[iQuant]);
-		SideInformation = AllQs[iFrame][iquad];
+		//SideInformation = AllQs[iFrame][iquad];
+		
 		vector<Mat> SideBlocks;
 		vector<vector<double>> SideBands;
 		vector<vector<int>> SideBandsQuant;
@@ -108,7 +108,7 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 		else if(iquad == 5)
 			framePSNRV += PSNR;
 	}
-	framePSNRY = framePSNRY / 3;
+	framePSNRY = framePSNRY / 4;
 	frameLDPCArate = frameLDPCArate / AllQs[iFrame].size();
 }
 
@@ -187,7 +187,7 @@ int main(int argc, char ** argv)
 		cs.codingMode = codeWZ;
 		printf("Enter Q parameter: ");
 		cs.iQuant = 0;
-		//scanf("%d", &cs.iQuant); ////
+		scanf("%d", &cs.iQuant); ////
 		cs.resourcespath = "E:\\Thesis\\Resources\\";
 		cs.outputpath = "E:\\Thesis\\Output\\";
 		cs.videoname = "foreman_qcif.yuv";

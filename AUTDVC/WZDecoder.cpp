@@ -7,18 +7,18 @@ namespace AUTDVC {
 namespace WZDecoder {
 	void SI_SimpleAverage(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
 	{
-		static StereoBM SBM;
-		static bool FirstRun = true;
-		if(FirstRun)
-		{
-			FirstRun = false;
-			SBM.init(0);
-		}
-		Mat disp;
-		SBM(PrevKeyQuad,NextKeyQuad,SI);
-				
+		//static StereoBM SBM;
+		//static bool FirstRun = true;
+		//if(FirstRun)
+		//{
+		//	FirstRun = false;
+		//	SBM.init(0);
+		//}
+		//Mat disp;
+		//SBM(PrevKeyQuad,NextKeyQuad,SI);		
+
 		// Estimate the SI through a simple average
-		//SI = (PrevKeyQuad + NextKeyQuad)/2.0;
+		SI = (PrevKeyQuad + NextKeyQuad)/2.0;
 		
 		SI.convertTo(SI,CV_8U);
 	}

@@ -183,7 +183,7 @@ void LDPCAdecodeBits(const char* InitByLadderFile, double *LLR_intrinsic, double
 			// hash-based method. This below solution to
 			// check the correctness is impractical since the 
 			// source bits are not presen at the decoder
-			if(numErrors[0] == 0)
+			//if(numErrors[0] == 0)
 			{
 				delete[] syndrome;
 				return;

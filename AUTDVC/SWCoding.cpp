@@ -270,6 +270,7 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 			
 		delete[] decodedbits;
 	}
+
 	for(unsigned int iCoeff=0 ; iCoeff<NCoeffs ; iCoeff++)
 		if( (*DecodedCoeffs)[iCoeff] >= maxLevel )
 			(*DecodedCoeffs)[iCoeff] = maxLevel - 1;

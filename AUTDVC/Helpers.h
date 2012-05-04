@@ -11,7 +11,7 @@ namespace AUTDVC {
 		and Key Frame Coding Mode Selection", IEEE Trans. on Image Processing, 2011 */
 
 namespace Consts {
-	const int ThreadCount = 4;
+	const int ThreadCount = 8;
 	const int LDPCALength = 396;
 	const int FramesPerSecond = 15;
 
@@ -25,7 +25,7 @@ namespace Consts {
 		{	64,32,16, 8,32,16, 8, 4,16, 8, 4, 4, 8, 4, 4, 0 },
 		{  128,64,32,16,16,32,16, 8,32,16, 8, 4,16, 8, 4, 0 }
 	};
-	const int JPEGQualityIndex[] = { 7, 20, 40, 60, 70, 80, 90, 95 };
+	const int JPEGQualityIndex[] = { 10, 15, 20, 30, 45, 60, 75, 85 };
 	const int DCTSize = 4;
 };
 namespace Misc {

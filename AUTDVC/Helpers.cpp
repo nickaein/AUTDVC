@@ -105,7 +105,7 @@ Mat EncodeDecodeJpeg(Mat im,int Quality)
 	//Encode the image into JPEG
 	vector<uchar> buf_encodedjpeg;
 	cv::imencode(".jpg",im,buf_encodedjpeg,params);
-	Mat im2 = cv::imdecode(buf_encodedjpeg,0);
+	Mat im2 = cv::imdecode(buf_encodedjpeg,0).clone();
 	return im2;
 }
 
