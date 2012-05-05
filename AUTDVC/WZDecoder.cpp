@@ -1,10 +1,114 @@
 #include "opencv2/core/core.hpp"
-#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/video/tracking.hpp"
 #include "Helpers.h"
+
+
+#include "opencv2/highgui/highgui.hpp"
+
+#include <fstream>
+using namespace std;
+
 using namespace cv;
 
 namespace AUTDVC {
 namespace WZDecoder {
+	void SI_MotionEstimtaion(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
+	{
+		vector<Point2f> coords;
+		vector<Point2f> flows;
+		for(int y=0;y<PrevKeyQuad.rows;y++)
+			for(int x=0;x<PrevKeyQuad.cols;x++)
+			{
+				coords.push_back( Point2f(x,y) );
+			}
+
+		vector<uchar> stat;
+		vector<float> err;
+		cv::calcOpticalFlowPyrLK(PrevKeyQuad,NextKeyQuad,coords,flows,stat,err);
+
+		SI = PrevKeyQuad.clone();
+		for(int i=0;i<coords.size();i++)
+		{
+			int x = (int)coords[i].x;
+			int y = (int)coords[i].y;
+			int xn = flows[i].x;
+			int yn = flows[i].y;
+			if(xn >= 0 && xn<SI.cols && yn>=0 && yn<SI.rows)
+				SI.at<char>(y,x) = 0; //PrevKeyQuad.at<char>(yn,xn);
+		}
+
+		//Mat flow;
+		//cv::calcOpticalFlowFarneback(PrevKeyQuad,NextKeyQuad,flow,0.5, 4, 25, 100, 5, 1.1, 0);
+		//double m,M;
+		//cv::minMaxLoc(abs(flow),&m,&M);	
+		//vector<Mat> flowxy;
+		//cv::split(flow,flowxy);
+
+		//Mat mflow;
+		//mflow = flowxy[0].clone();
+		//
+		//ofstream fout;
+		//fout = ofstream("flow0.txt",std::ios_base::out);
+		//for(int i=0 ; i<mflow.rows ; i++)
+		//{
+		//	for(int j=0 ; j<mflow.cols ; j++)
+		//	{
+		//		fout << mflow.at<float>(i,j) << "\t";
+		//	}
+		//	fout << endl;
+		//}
+		//fout.close();
+
+		//mflow = flowxy[1].clone();
+		//fout = ofstream("flow1.txt",std::ios_base::out);
+		//for(int i=0 ; i<mflow.rows ; i++)
+		//{
+		//	for(int j=0 ; j<mflow.cols ; j++)
+		//	{
+		//		fout << mflow.at<float>(i,j) << "\t";
+		//	}
+		//	fout << endl;
+		//}
+		//fout.close();
+
+		//Mat flowx = flowxy[0] ;
+		//Mat flowy = flowxy[1] ;
+		////flowx = flowx / 2.0;
+		////flowy = flowy / 2.0;
+		//SI = PrevKeyQuad.clone();
+
+		//for(int y=0 ; y<SI.rows ; y++)
+		//{
+		//	for(int x=0 ; x<SI.cols ; x++)
+		//	{
+		//		float dx = flowx.at<float>(y,x);
+		//		float dy = flowy.at<float>(y,x);
+		//		int xn = (int)(x+dx);
+		//		int yn = (int)(y+dy);
+		//		if( xn >= 0 && xn < SI.cols && yn >= 0 && yn < SI.rows )
+		//		{
+		//			SI.at<char>(y,x) = PrevKeyQuad.at<char>(yn,xn);
+		//		}
+		//		else
+		//		{
+		//			x = x;
+		//		}
+		//	}
+		//}
+
+		imwrite("1.bmp",SI);
+		exit(0);
+		//static bool FirstRun = true;
+		//if(FirstRun)
+		//{
+		//	FirstRun = false;
+		//	SBM.init(0);
+		//}
+		//Mat disp;
+		//SBM(PrevKeyQuad,NextKeyQuad,SI);
+		SI.convertTo(SI,CV_8U);
+	}
+
 	void SI_SimpleAverage(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
 	{
 		//static StereoBM SBM;

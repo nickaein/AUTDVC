@@ -1,19 +1,19 @@
 #include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
 #include <iostream>
 #include "Helpers.h"
 #include "SWCoding.h"
 #include "WZDecoder.h"
 #include "LDPCA.h"
-#include "opencv2/highgui/highgui.hpp"
 
 using namespace cv;
 using namespace std;
 
 #ifdef _DEBUG
-#pragma comment(lib,"opencv_calib3d231d")
+#pragma comment(lib,"opencv_video231d")
 #pragma comment(lib,"opencv_imgproc231d")
 #else
-#pragma comment(lib,"opencv_calib3d231")
+#pragma comment(lib,"opencv_video231")
 #pragma comment(lib,"opencv_imgproc231")
 #endif
 
@@ -43,7 +43,8 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 		Mat SideInformation;
 		Mat PrevKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame-1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
 		Mat NextKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame+1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
-		AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
+		//AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
+		AUTDVC::WZDecoder::SI_MotionEstimtaion(PrevKey,NextKey,SideInformation);
 
 		//////zzzzzzzzzzzzzzzzzz
 		//SideInformation = AllQs[iFrame][iquad];
@@ -187,7 +188,7 @@ int main(int argc, char ** argv)
 		cs.codingMode = codeWZ;
 		printf("Enter Q parameter: ");
 		cs.iQuant = 0;
-		scanf("%d", &cs.iQuant); ////
+		//scanf("%d", &cs.iQuant); ////
 		cs.resourcespath = "E:\\Thesis\\Resources\\";
 		cs.outputpath = "E:\\Thesis\\Output\\";
 		cs.videoname = "foreman_qcif.yuv";
