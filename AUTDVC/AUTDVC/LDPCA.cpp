@@ -1,6 +1,7 @@
 //LDPCA ENCODER
 //Author:  David Varodayan (varodayan@stanford.edu)
 //Date:    May 8, 2006
+
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

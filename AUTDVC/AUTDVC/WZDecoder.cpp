@@ -2,7 +2,6 @@
 #include "opencv2/video/tracking.hpp"
 #include "Helpers.h"
 
-
 #include "opencv2/highgui/highgui.hpp"
 
 #include <fstream>

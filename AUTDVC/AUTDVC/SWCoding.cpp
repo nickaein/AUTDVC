@@ -7,6 +7,7 @@
 using namespace std;
 using namespace cv;
 
+
 namespace AUTDVC {
 DWORD WINAPI ThreadSWDecodeBand(void* par);
 

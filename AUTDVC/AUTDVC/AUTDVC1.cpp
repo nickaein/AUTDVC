@@ -13,8 +13,7 @@ using namespace std;
 #pragma comment(lib,"opencv_core241d.lib")
 #pragma comment(lib,"opencv_highgui241d.lib")
 #pragma comment(lib,"opencv_video241d")
-//#pragma comment(lib,"opencv_imgproc241d")
-
+//opencv_imgproc241d
 //opencv_video241d.lib
 //opencv_legacy241d.lib
 #else

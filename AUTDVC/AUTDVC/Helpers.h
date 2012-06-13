@@ -6,7 +6,6 @@ using std::vector;
 using namespace cv;
 
 namespace AUTDVC {
-
 /* Quantization table is from: Esmaili, "Wyner–Ziv Video Coding With Classified Correlation Noise Estimation 
 		and Key Frame Coding Mode Selection", IEEE Trans. on Image Processing, 2011 */
 

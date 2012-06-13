@@ -17,6 +17,7 @@ int LoadVideo(string pVideoFileName, cv::Size2i Resolution, const int nStartFram
 	// Determine dimensions
 	int nWidth = Resolution.width;
 	int nHeight = Resolution.height;
+
 	// Allocate space
 	int nFrames = nEndFrame - nStartFrame + 1;
 	if (nFrames <= 0) {
