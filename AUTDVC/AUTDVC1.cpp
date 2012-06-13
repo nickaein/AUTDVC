@@ -10,11 +10,18 @@ using namespace cv;
 using namespace std;
 
 #ifdef _DEBUG
-#pragma comment(lib,"opencv_video231d")
-#pragma comment(lib,"opencv_imgproc231d")
+#pragma comment(lib,"opencv_core241d.lib")
+#pragma comment(lib,"opencv_highgui241d.lib")
+#pragma comment(lib,"opencv_video241d")
+//#pragma comment(lib,"opencv_imgproc241d")
+
+//opencv_video241d.lib
+//opencv_legacy241d.lib
 #else
-#pragma comment(lib,"opencv_video231")
-#pragma comment(lib,"opencv_imgproc231")
+#pragma comment(lib,"opencv_core241.lib")
+#pragma comment(lib,"opencv_highgui241.lib")
+#pragma comment(lib,"opencv_video241")
+#pragma comment(lib,"opencv_imgproc241")
 #endif
 
 enum CodingMode { codeJpegIntra, codeWZ, codeH264};

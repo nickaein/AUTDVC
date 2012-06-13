@@ -207,7 +207,7 @@ DWORD WINAPI ThreadSWDecodeBand(void* par)
 	size_t NCoeffs = SideInfoQuantizedBands->size();
 	DecodedCoeffs->resize( NCoeffs );
 	
-	int maxLevel = QuantRanges->size() - 1;
+	int maxLevel = (int)(QuantRanges->size() - 1);
 
 	// decode starting from MSB to LSB
 	for(int iBitplane=nBitplanes-1 ; iBitplane>=0 ; iBitplane--)

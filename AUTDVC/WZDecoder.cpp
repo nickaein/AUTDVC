@@ -19,7 +19,7 @@ namespace WZDecoder {
 		for(int y=0;y<PrevKeyQuad.rows;y++)
 			for(int x=0;x<PrevKeyQuad.cols;x++)
 			{
-				coords.push_back( Point2f(x,y) );
+				coords.push_back( Point2f((float)x,(float)y) );
 			}
 
 		vector<uchar> stat;
@@ -31,8 +31,8 @@ namespace WZDecoder {
 		{
 			int x = (int)coords[i].x;
 			int y = (int)coords[i].y;
-			int xn = flows[i].x;
-			int yn = flows[i].y;
+			int xn = (int)flows[i].x;
+			int yn = (int)flows[i].y;
 			if(xn >= 0 && xn<SI.cols && yn>=0 && yn<SI.rows)
 				SI.at<char>(y,x) = 0; //PrevKeyQuad.at<char>(yn,xn);
 		}
