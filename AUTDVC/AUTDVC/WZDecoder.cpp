@@ -17,9 +17,13 @@ namespace WZDecoder {
 		Mat NK = NextKeyQuad.clone();
 		PK.convertTo(PK,CV_64F);
 		PK.convertTo(NK,CV_64F);
-
 		PK = PK / 255.0;
 		NK = NK / 255.0;
+
+		DImage Im1(PK.size[1],PK.size[0]);
+		DImage Im2(NK.size[1],NK.size[0]);
+		memcpy(Im1.pData,PK.data,sizeof(double)*Im1.npixels());
+		memcpy(Im2.pData,NK.data,sizeof(double)*Im2.npixels());
 
 		double alpha=0.012;
 		double ratio=0.75;
@@ -27,36 +31,27 @@ namespace WZDecoder {
 		int nOuterFPIterations = 7;
 		int nInnerFPIterations = 3;
 		int nSORIterations= 30;
-
-		DImage Im1(PK.size[1],PK.size[0]);
-		DImage Im2(NK.size[1],NK.size[0]);
-		memcpy(Im1.pData,PK.data,sizeof(double)*Im1.npixels());
-		memcpy(Im2.pData,NK.data,sizeof(double)*Im2.npixels());
-
-		//DImage Im1;
-		//DImage Im2;
-		//Im1.imread("001.bmp");
-		//Im2.imread("002.bmp");
-		bool res1 = Im1.imwrite("image1.jpg",ImageIO::ImageType::standard);
-		bool res2 = Im2.imwrite("image3.jpg",ImageIO::ImageType::standard);
-
-		DImage vx,vy,warpI2;
 		OpticalFlow::IsDisplay = false;
-		OpticalFlow::Coarse2FineFlow(vx,vy,warpI2,Im1,Im2,alpha,ratio,minWidth,nOuterFPIterations,nInnerFPIterations,nSORIterations);
+		DImage vx1,vy1,warpI2;
+		DImage vx2,vy2;
+		OpticalFlow::Coarse2FineFlow(vx1,vy1,warpI2,Im1,Im2,alpha,ratio,minWidth,nOuterFPIterations,nInnerFPIterations,nSORIterations);
+		OpticalFlow::Coarse2FineFlow(vx2,vy2,warpI2,Im2,Im1,alpha,ratio,minWidth,nOuterFPIterations,nInnerFPIterations,nSORIterations);
 		
-		vx.Multiplywith(0.5);
-		vy.Multiplywith(0.5);
+		vx1.Multiplywith(0.5);
+		vy1.Multiplywith(0.5);
+		vx2.Multiplywith(0.5);
+		vy2.Multiplywith(0.5);
+		//OpticalFlow::showFlow(vx,"fl1.bmp");
+		//OpticalFlow::showFlow(vy,"fl2.bmp");
 
-		OpticalFlow::showFlow(vx,"fl1.bmp");
-		OpticalFlow::showFlow(vy,"fl2.bmp");
+		DImage Out1,Out2;
+		OpticalFlow::warpFL(Out1,Im1,Im2,vx1,vy1);
+		OpticalFlow::warpFL(Out2,Im2,Im1,vx2,vy2);
 
-		DImage Out;
-		OpticalFlow::warpFL(Out,Im1,Im2,vx,vy);
-		Out.imwrite("image2.jpg");
-
-		memcpy(PK.data,Out.pData,sizeof(double)*Out.npixels());
+		memcpy(PK.data,Out1.pData,sizeof(double)*Out1.npixels());
+		memcpy(NK.data,Out2.pData,sizeof(double)*Out2.npixels());
 		
-		SI = PK * 255.0;
+		SI = ((PK + NK)/2.0) * 255.0;
 		SI.convertTo(SI,CV_8U);
 	}
 
