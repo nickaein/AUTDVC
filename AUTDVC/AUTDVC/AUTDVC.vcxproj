@@ -42,9 +42,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <ExecutablePath>E:\Thesis\OpenCV_243\bin\$(Configuration)\;$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <ExecutablePath>E:\Thesis\OpenCV_243\bin\$(Configuration);$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -53,13 +55,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>E:\Thesis\OpenCV_24\opencv-source\build\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\Thesis\OpenCV_243\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>E:\Thesis\OpenCV_24\opencv-source\build\x64\vc10\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\Thesis\OpenCV_243\lib\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -72,27 +74,34 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>E:\Thesis\OpenCV\opencv-source\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\Thesis\OpenCV_243\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>E:\Thesis\OpenCV\opencv-bin\lib\Release</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core231.lib;opencv_highgui231.lib;opencv_ml231.lib;opencv_video231.lib;opencv_imgproc231.lib;opencv_legacy231.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\Thesis\OpenCV_243\lib\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AUTDVC1.cpp" />
     <ClCompile Include="LDPCA.cpp" />
     <ClCompile Include="Helpers.cpp" />
+    <ClCompile Include="OpticalFlow\GaussianPyramid.cpp" />
+    <ClCompile Include="OpticalFlow\OpticalFlow.cpp" />
+    <ClCompile Include="OpticalFlow\Stochastic.cpp" />
     <ClCompile Include="WZDecoder.cpp" />
     <ClCompile Include="SWCoding.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LDPCA.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="OpticalFlow\GaussianPyramid.h" />
+    <ClInclude Include="OpticalFlow\OpticalFlow.h" />
+    <ClInclude Include="OpticalFlow\Stochastic.h" />
+    <ClInclude Include="OpticalFlow\Vector.h" />
     <ClInclude Include="WZDecoder.h" />
     <ClInclude Include="SWCoding.h" />
   </ItemGroup>

@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="OpticalFlow">
+      <UniqueIdentifier>{a3deb100-e3d9-456a-b57d-e4f9c78e52f7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AUTDVC1.cpp">
@@ -30,6 +33,15 @@
     <ClCompile Include="WZDecoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OpticalFlow\OpticalFlow.cpp">
+      <Filter>OpticalFlow</Filter>
+    </ClCompile>
+    <ClCompile Include="OpticalFlow\GaussianPyramid.cpp">
+      <Filter>OpticalFlow</Filter>
+    </ClCompile>
+    <ClCompile Include="OpticalFlow\Stochastic.cpp">
+      <Filter>OpticalFlow</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SWCoding.h">
@@ -43,6 +55,18 @@
     </ClInclude>
     <ClInclude Include="Helpers.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OpticalFlow\OpticalFlow.h">
+      <Filter>OpticalFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="OpticalFlow\GaussianPyramid.h">
+      <Filter>OpticalFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="OpticalFlow\Stochastic.h">
+      <Filter>OpticalFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="OpticalFlow\Vector.h">
+      <Filter>OpticalFlow</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

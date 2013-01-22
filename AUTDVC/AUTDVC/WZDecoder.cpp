@@ -1,9 +1,9 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/video/tracking.hpp"
 #include "Helpers.h"
-
 #include "opencv2/highgui/highgui.hpp"
 
+#include "OpticalFlow/OpticalFlow.h"
 #include <fstream>
 using namespace std;
 
@@ -13,98 +13,50 @@ namespace AUTDVC {
 namespace WZDecoder {
 	void SI_MotionEstimtaion(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
 	{
-		vector<Point2f> coords;
-		vector<Point2f> flows;
-		for(int y=0;y<PrevKeyQuad.rows;y++)
-			for(int x=0;x<PrevKeyQuad.cols;x++)
-			{
-				coords.push_back( Point2f((float)x,(float)y) );
-			}
+		Mat PK = PrevKeyQuad.clone();
+		Mat NK = NextKeyQuad.clone();
+		PK.convertTo(PK,CV_64F);
+		PK.convertTo(NK,CV_64F);
 
-		vector<uchar> stat;
-		vector<float> err;
-		cv::calcOpticalFlowPyrLK(PrevKeyQuad,NextKeyQuad,coords,flows,stat,err);
+		PK = PK / 255.0;
+		NK = NK / 255.0;
 
-		SI = PrevKeyQuad.clone();
-		for(int i=0;i<coords.size();i++)
-		{
-			int x = (int)coords[i].x;
-			int y = (int)coords[i].y;
-			int xn = (int)flows[i].x;
-			int yn = (int)flows[i].y;
-			if(xn >= 0 && xn<SI.cols && yn>=0 && yn<SI.rows)
-				SI.at<char>(y,x) = 0; //PrevKeyQuad.at<char>(yn,xn);
-		}
+		double alpha=0.012;
+		double ratio=0.75;
+		int minWidth= 10;
+		int nOuterFPIterations = 7;
+		int nInnerFPIterations = 3;
+		int nSORIterations= 30;
 
-		//Mat flow;
-		//cv::calcOpticalFlowFarneback(PrevKeyQuad,NextKeyQuad,flow,0.5, 4, 25, 100, 5, 1.1, 0);
-		//double m,M;
-		//cv::minMaxLoc(abs(flow),&m,&M);	
-		//vector<Mat> flowxy;
-		//cv::split(flow,flowxy);
+		DImage Im1(PK.size[1],PK.size[0]);
+		DImage Im2(NK.size[1],NK.size[0]);
+		memcpy(Im1.pData,PK.data,sizeof(double)*Im1.npixels());
+		memcpy(Im2.pData,NK.data,sizeof(double)*Im2.npixels());
 
-		//Mat mflow;
-		//mflow = flowxy[0].clone();
-		//
-		//ofstream fout;
-		//fout = ofstream("flow0.txt",std::ios_base::out);
-		//for(int i=0 ; i<mflow.rows ; i++)
-		//{
-		//	for(int j=0 ; j<mflow.cols ; j++)
-		//	{
-		//		fout << mflow.at<float>(i,j) << "\t";
-		//	}
-		//	fout << endl;
-		//}
-		//fout.close();
+		//DImage Im1;
+		//DImage Im2;
+		//Im1.imread("001.bmp");
+		//Im2.imread("002.bmp");
+		bool res1 = Im1.imwrite("image1.jpg",ImageIO::ImageType::standard);
+		bool res2 = Im2.imwrite("image3.jpg",ImageIO::ImageType::standard);
 
-		//mflow = flowxy[1].clone();
-		//fout = ofstream("flow1.txt",std::ios_base::out);
-		//for(int i=0 ; i<mflow.rows ; i++)
-		//{
-		//	for(int j=0 ; j<mflow.cols ; j++)
-		//	{
-		//		fout << mflow.at<float>(i,j) << "\t";
-		//	}
-		//	fout << endl;
-		//}
-		//fout.close();
+		DImage vx,vy,warpI2;
+		OpticalFlow::IsDisplay = false;
+		OpticalFlow::Coarse2FineFlow(vx,vy,warpI2,Im1,Im2,alpha,ratio,minWidth,nOuterFPIterations,nInnerFPIterations,nSORIterations);
+		
+		vx.Multiplywith(0.5);
+		vy.Multiplywith(0.5);
 
-		//Mat flowx = flowxy[0] ;
-		//Mat flowy = flowxy[1] ;
-		////flowx = flowx / 2.0;
-		////flowy = flowy / 2.0;
-		//SI = PrevKeyQuad.clone();
+		OpticalFlow::showFlow(vx,"fl1.bmp");
+		OpticalFlow::showFlow(vy,"fl2.bmp");
 
-		//for(int y=0 ; y<SI.rows ; y++)
-		//{
-		//	for(int x=0 ; x<SI.cols ; x++)
-		//	{
-		//		float dx = flowx.at<float>(y,x);
-		//		float dy = flowy.at<float>(y,x);
-		//		int xn = (int)(x+dx);
-		//		int yn = (int)(y+dy);
-		//		if( xn >= 0 && xn < SI.cols && yn >= 0 && yn < SI.rows )
-		//		{
-		//			SI.at<char>(y,x) = PrevKeyQuad.at<char>(yn,xn);
-		//		}
-		//		else
-		//		{
-		//			x = x;
-		//		}
-		//	}
-		//}
+		DImage Out;
+		OpticalFlow::warpFL(Out,Im1,Im2,vx,vy);
+		Out.imwrite("image2.jpg");
 
-		imwrite("1.bmp",SI);
-		exit(0);
-		//static bool FirstRun = true;
-		//if(FirstRun)
-		//{
-		//	FirstRun = false;
-		//	SBM.init(0);
-		//}
-		//Mat disp;
-		//SBM(PrevKeyQuad,NextKeyQuad,SI);
+		memcpy(PK.data,Out.pData,sizeof(double)*Out.npixels());
+		
+		SI = PK * 255.0;
 		SI.convertTo(SI,CV_8U);
 	}
 

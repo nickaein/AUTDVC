@@ -17,10 +17,10 @@ using namespace std;
 //opencv_video241d.lib
 //opencv_legacy241d.lib
 #else
-#pragma comment(lib,"opencv_core241.lib")
-#pragma comment(lib,"opencv_highgui241.lib")
-#pragma comment(lib,"opencv_video241")
-#pragma comment(lib,"opencv_imgproc241")
+#pragma comment(lib,"opencv_core243.lib")
+#pragma comment(lib,"opencv_highgui243.lib")
+#pragma comment(lib,"opencv_video243")
+#pragma comment(lib,"opencv_imgproc243")
 #endif
 
 enum CodingMode { codeJpegIntra, codeWZ, codeH264};
@@ -165,7 +165,8 @@ void Initialize(CodecSettings& cs)
 	FILE* flog;
 	if (fopen_s(&flog,cs.RDlogfile.c_str(),"wt")!=0)
 	{
-		printf("cannot open log file...");
+		printf("cannot open log file (%s).\n\r",cs.RDlogfile.c_str());
+		getchar();
 		exit(-1);
 	}
 	fclose(flog);
@@ -252,6 +253,9 @@ int main(int argc, char ** argv)
 	running_time = ((double)getTickCount() - running_time)/(double)getTickFrequency();
 
 	printf("\r\n\r\n Running time (sec): %.2f",running_time);
+	getchar();
+	getchar();
+
 	return 0;
 
 	//cvNamedWindow("Image:", CV_WINDOW_AUTOSIZE);
