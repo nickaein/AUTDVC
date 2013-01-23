@@ -3,13 +3,63 @@
 #include "Helpers.h"
 #include <string>
 #include <vector>
+#include <time.h>
+#include "OpticalFlow\Image.h"
 
 using std::string;
 using std::vector;
 using namespace cv;
 
 namespace AUTDVC {
+	void ReconstructByOF(DImage& Iwarped,const DImage& Im,const DImage& vx,const DImage& vy)
+	{
+		int width = Im.width();
+		int height = Im.height();
+
+		if(Iwarped.matchDimension(Im)==false)
+			Iwarped.allocate(Im.width(),Im.height(),Im.nchannels());
+
+		for (int i = 0; i < height; i++)
+		{
+			for (int j = 0; j < width; j++)
+			{
+				int offset = i*width + j;
+				int i1 = floor(i-vx[offset]);
+				int j1 = floor(j-vy[offset]);
+				i1 = max(0,min(i1,height-1));
+				j1 = max(0,min(j1,width-1));
+
+				int offset2 = i1*width + j1;
+				Iwarped[offset2] = Im[offset];
+			}
+		}
+//for i=1:size(I1,1)
+//    for j=1:size(I1,2)
+//        i1 = round( i - uv(i,j,2) );
+//        j1 = round( j - uv(i,j,1) );
+//        i1 = max(1,min(i1,size(I1,1)));
+//        j1 = max(1,min(j1,size(I1,2)));
+//
+//        I3(i,j,:) = I1(i1,j1,:);
+//    end
+//end
+	}
+
+
 namespace Misc {
+string GetCurrentDateTimeString()
+{
+	time_t rawtime;
+	tm * timeinfo= NULL;
+	char buffer [80]= {0};
+
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+
+	strftime (buffer,80,"%Y-%m-%d_%H-%M-%S",timeinfo);
+	return string(buffer);
+
+}
 int LoadVideo(string pVideoFileName, cv::Size2i Resolution, const int nStartFrame, const int nEndFrame, vector<Mat>& VidY, vector<Mat>& VidU, vector<Mat>& VidV)
 {
 	bool bSuccess = true;
@@ -31,7 +81,7 @@ int LoadVideo(string pVideoFileName, cv::Size2i Resolution, const int nStartFram
 
 	FILE* pFile = fopen(pVideoFileName.c_str(), "rb");
 	if (pFile == NULL) {
-		fprintf(stderr, "Video file cannot be opened: %s\n", pVideoFileName);
+		fprintf(stderr, "Video file cannot be opened: %s\n", pVideoFileName.c_str());
 		return -1;
 	}
 

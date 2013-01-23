@@ -1,19 +1,20 @@
 #include "opencv2/core/core.hpp"
 #include <string>
 #include <vector>
+#include "OpticalFlow\Image.h"
 using std::string;
 using std::vector;
 using namespace cv;
 
 namespace AUTDVC {
-/* Quantization table is from: Esmaili, "Wyner–Ziv Video Coding With Classified Correlation Noise Estimation 
-		and Key Frame Coding Mode Selection", IEEE Trans. on Image Processing, 2011 */
-
+	void ReconstructByOF(DImage& Iwarped,const DImage& Im,const DImage& vx,const DImage& vy);
 namespace Consts {
 	const int ThreadCount = 8;
 	const int LDPCALength = 396;
 	const int FramesPerSecond = 15;
 
+	/* Quantization table is from: Esmaili, "Wyner–Ziv Video Coding With Classified Correlation Noise Estimation 
+			and Key Frame Coding Mode Selection", IEEE Trans. on Image Processing, 2011 */
 	const short QLevels[8][16] = {
 		{	16, 8, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 		{	32, 8, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -28,6 +29,7 @@ namespace Consts {
 	const int DCTSize = 4;
 };
 namespace Misc {
+	string GetCurrentDateTimeString();
 	int LoadVideo(string pVideoFileName, cv::Size2i Resolution, const int nStartFrame, const int nEndFrame, vector<Mat>& VidY, vector<Mat>& VidU, vector<Mat>& VidV);
 	double calcPSNR(const Mat& I1, const Mat& I2);
 	Mat EncodeDecodeJpeg(Mat im,int Quality);

@@ -48,13 +48,17 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 		//Generate SideInformation
 		Mat SideInformation;
 		Mat PrevKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame-1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
-		Mat NextKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame+1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
-		//AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
-		AUTDVC::WZDecoder::SI_MotionEstimtaion(PrevKey,NextKey,SideInformation);
-
-		//////zzzzzzzzzzzzzzzzzz
-		//SideInformation = AllQs[iFrame][iquad];
 		
+		Mat NextKey = AUTDVC::Misc::EncodeDecodeJpeg(AllQs[iFrame+1][iquad],AUTDVC::Consts::JPEGQualityIndex[iQuant]);
+
+		Mat Residual;
+		//AUTDVC::WZDecoder::SI_SimpleAverage(PrevKey,NextKey,SideInformation);
+		AUTDVC::WZDecoder::SI_OpticalFlow1(PrevKey,NextKey,SideInformation,Residual);
+
+		// ideal side information (exact frame)
+		SideInformation = AllQs[iFrame][iquad].clone();
+		
+		// Transform Side Information
 		vector<Mat> SideBlocks;
 		vector<vector<double>> SideBands;
 		vector<vector<int>> SideBandsQuant;
@@ -71,7 +75,17 @@ void CodingWZ(int iFrame,int iQuant,const vector<vector<Mat>>& AllQs,double& fra
 		SideBandsQuant = AUTDVC::Quantizer(SideBands,QuantRanges);
 
 		vector<vector<double>> Alphas;
-		AUTDVC::WZDecoder::CorrelationNoiseModeling(AllQs[iFrame-1][iquad],AllQs[iFrame+1][iquad],Alphas);
+		
+		
+		//Mat X = PrevKey.clone();
+		//Mat Y = NextKey.clone();
+		//X.convertTo(X,CV_64F);
+		//Y.convertTo(Y,CV_64F);
+		//Residual = ((X-Y)/2.0);
+
+		AUTDVC::WZDecoder::CorrelationNoiseModeling(Residual,Alphas);
+
+		vector<double> MeanAlpha;
 
 		// Decode the quad using SideInformation, accumulated syndromes in 
 		// the encoder buffer, and Laplacian coefficients for CNM		
@@ -158,11 +172,19 @@ void Initialize(CodecSettings& cs)
 	logfile += "_Q";
 	logfile += buf;
 
-	logfile += ".log";
-	cs.RDlogfile = logfile;
+	string log_ext =  ".log";
+	cs.RDlogfile = logfile + log_ext;
 
-	// initialize log file
+	// check if the log file already exists
 	FILE* flog;
+	fopen_s(&flog,cs.RDlogfile.c_str(),"rt");
+	if(flog!=NULL)
+	{
+		fclose(flog);
+		string rename_to = logfile + " (renamed at " + AUTDVC::Misc::GetCurrentDateTimeString() + ")" + log_ext;
+		std::rename(cs.RDlogfile.c_str(),rename_to.c_str());
+	}
+
 	if (fopen_s(&flog,cs.RDlogfile.c_str(),"wt")!=0)
 	{
 		printf("cannot open log file (%s).\n\r",cs.RDlogfile.c_str());
@@ -198,7 +220,7 @@ int main(int argc, char ** argv)
 		//scanf("%d", &cs.iQuant); ////
 		cs.resourcespath = "E:\\Thesis\\Resources\\";
 		cs.outputpath = "E:\\Thesis\\Output\\";
-		cs.videoname = "foreman_qcif.yuv";
+		cs.videoname = "foreman_qcif_15.yuv";
 	}
 	
 	printf("\nInitializing the Codec...\n");
@@ -216,7 +238,7 @@ int main(int argc, char ** argv)
 
 	double running_time = (double)getTickCount();
 
-	char buf[1000];
+	char buf[1000]={0};
 
 	// encode WZ Frame
 	for(int iFrame=0 ; iFrame<VidY.size(); iFrame++)

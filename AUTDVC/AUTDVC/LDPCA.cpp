@@ -26,7 +26,11 @@ void LDPCAencodeBits(const char *InitByLadderFile, double *source, double *accum
 		int nzmax = 0;
 
 		if( fopen_s(&fp,InitByLadderFile,"r") != 0)
+		{
+			printf("CANNOT OPEN LADDER FILE (%s)\n",InitByLadderFile);
+			throw 0;
 			return;
+		}
  
 		fscanf_s(fp, "%d", &numCodes);
 		fscanf_s(fp, "%d", &n);
@@ -109,7 +113,11 @@ void LDPCAdecodeBits(const char* InitByLadderFile, double *LLR_intrinsic, double
 	{
 		FILE *fp;
 		if( fopen_s(&fp,InitByLadderFile,"r") != 0)
+		{
+			printf("CANNOT OPEN LADDER FILE (%s)\n",InitByLadderFile);
+			throw 0;
 			return;
+		}
  
 		fscanf_s(fp, "%d", &numCodes);
 		fscanf_s(fp, "%d", &n);

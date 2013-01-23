@@ -11,14 +11,16 @@ using namespace cv;
 
 namespace AUTDVC {
 namespace WZDecoder {
-	void SI_MotionEstimtaion(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
+	void SI_OpticalFlow1(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI,Mat& Residual)
 	{
 		Mat PK = PrevKeyQuad.clone();
 		Mat NK = NextKeyQuad.clone();
+
 		PK.convertTo(PK,CV_64F);
-		PK.convertTo(NK,CV_64F);
+		NK.convertTo(NK,CV_64F);
 		PK = PK / 255.0;
 		NK = NK / 255.0;
+
 
 		DImage Im1(PK.size[1],PK.size[0]);
 		DImage Im2(NK.size[1],NK.size[0]);
@@ -26,8 +28,8 @@ namespace WZDecoder {
 		memcpy(Im2.pData,NK.data,sizeof(double)*Im2.npixels());
 
 		double alpha=0.012;
-		double ratio=0.75;
-		int minWidth= 10;
+		double ratio=0.8;
+		int minWidth= 5;
 		int nOuterFPIterations = 7;
 		int nInnerFPIterations = 3;
 		int nSORIterations= 30;
@@ -37,6 +39,21 @@ namespace WZDecoder {
 		OpticalFlow::Coarse2FineFlow(vx1,vy1,warpI2,Im1,Im2,alpha,ratio,minWidth,nOuterFPIterations,nInnerFPIterations,nSORIterations);
 		OpticalFlow::Coarse2FineFlow(vx2,vy2,warpI2,Im2,Im1,alpha,ratio,minWidth,nOuterFPIterations,nInnerFPIterations,nSORIterations);
 		
+		//DImage tmp;
+		//// map frame (t-1) to fram (t+1) 
+		//// using calculated optical flow
+		//ReconstructByOF(tmp,Im1,vx1,vy1);
+		//PrevToNext = Mat(PrevKeyQuad.size(),CV_64F);
+		//memcpy(PrevToNext.data,tmp.pData,sizeof(double)*tmp.npixels());
+		//PrevToNext.convertTo(PrevToNext,CV_8U);
+
+		//// map frame (t+1) to fram (t-1)
+		//// using calculated optical flow
+		//ReconstructByOF(tmp,Im2,vx2,vy2);
+		//NextToPrev = Mat(NextKeyQuad.size(),CV_64F);
+		//memcpy(NextToPrev.data,tmp.pData,sizeof(double)*tmp.npixels());
+		//NextToPrev.convertTo(NextToPrev,CV_8U);
+
 		vx1.Multiplywith(0.5);
 		vy1.Multiplywith(0.5);
 		vx2.Multiplywith(0.5);
@@ -46,47 +63,33 @@ namespace WZDecoder {
 
 		DImage Out1,Out2;
 		OpticalFlow::warpFL(Out1,Im1,Im2,vx1,vy1);
+		//vx1.Multiplywith(-1.0);
+		//vy1.Multiplywith(-1.0);
+		//OpticalFlow::warpFL(Out2,Im2,Im1,vx1,vy1);
 		OpticalFlow::warpFL(Out2,Im2,Im1,vx2,vy2);
 
 		memcpy(PK.data,Out1.pData,sizeof(double)*Out1.npixels());
 		memcpy(NK.data,Out2.pData,sizeof(double)*Out2.npixels());
-		
+
+		//Generate side information by averaging f_1 and f_2
 		SI = ((PK + NK)/2.0) * 255.0;
 		SI.convertTo(SI,CV_8U);
-	}
 
-	void SI_SimpleAverage(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
-	{
-		//static StereoBM SBM;
-		//static bool FirstRun = true;
-		//if(FirstRun)
-		//{
-		//	FirstRun = false;
-		//	SBM.init(0);
-		//}
-		//Mat disp;
-		//SBM(PrevKeyQuad,NextKeyQuad,SI);		
+		//imwrite("F20.bmp",SI);
 
-		// Estimate the SI through a simple average
-		SI = (PrevKeyQuad + NextKeyQuad)/2.0;
-		
-		SI.convertTo(SI,CV_8U);
+
+		Residual = 255.0 * (NK - PK)/1.0;
 	}
 
 
-	void CorrelationNoiseModeling(Mat PrevKeyQuad,Mat NextKeyQuad,vector<vector<double>>& Alphas)
+	void CorrelationNoiseModeling(Mat Residual,vector<vector<double>>& Alphas)
 	{
-		//Correlation Noise Modeling
-		// R = (X_F - X_B)/2
-		Mat ResidualQuad = (NextKeyQuad - PrevKeyQuad)/2;
-
 		// abs( Tn(u,v) ) = abs( DCT(Rn) ) for n-th block
-		vector<Mat> ResiBlocks = AUTDVC::MapData::Quad2Blocks(ResidualQuad,Consts::DCTSize);
+		vector<Mat> ResiBlocks = AUTDVC::MapData::Quad2Blocks(Residual,Consts::DCTSize);
 		for(int iBlock=0 ; iBlock<ResiBlocks.size() ; iBlock++)
 		{
 			Mat m;
 			m = ResiBlocks[iBlock];
-			m.convertTo(m,CV_64F);
 			dct(m,m);
 			ResiBlocks[iBlock] = abs( m );
 		}
@@ -139,6 +142,24 @@ namespace WZDecoder {
 					Alphas[iBand][iCoeff] = sqrt( 2.0/DistCoeffs[iBand][iCoeff] );
 			}
 		}
+	}
+
+	void SI_SimpleAverage(Mat PrevKeyQuad,Mat NextKeyQuad,Mat& SI)
+	{
+		//static StereoBM SBM;
+		//static bool FirstRun = true;
+		//if(FirstRun)
+		//{
+		//	FirstRun = false;
+		//	SBM.init(0);
+		//}
+		//Mat disp;
+		//SBM(PrevKeyQuad,NextKeyQuad,SI);		
+
+		// Estimate the SI through a simple average
+		SI = (PrevKeyQuad + NextKeyQuad)/2.0;
+		
+		SI.convertTo(SI,CV_8U);
 	}
 
 
