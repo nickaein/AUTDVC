@@ -216,10 +216,10 @@ int main(int argc, char ** argv)
 	{
 		cs.codingMode = codeWZ;
 		printf("Enter Q parameter: ");
-		cs.iQuant = 0;
+		cs.iQuant = 7;
 		//scanf("%d", &cs.iQuant); ////
 		cs.resourcespath = "E:\\Thesis\\Resources\\";
-		cs.outputpath = "E:\\Thesis\\Output\\";
+		cs.outputpath = "D:\\Docs\\Dropbox\\Thesis\\OUTPUT\\1";
 		cs.videoname = "foreman_qcif_15.yuv";
 	}
 	
